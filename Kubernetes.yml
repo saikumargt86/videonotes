@@ -135,3 +135,46 @@ delete with config
 kubectl delete -f nginx-deployment.yaml
 #Metrics
 kubectl top The kubectl top command returns current CPU and memory usage for a cluster’s pods or nodes, or for a particular pod or node if specified.
+
+
+#kubectl installation
+https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+1.curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+2.chmod +x ./kubectl
+3.sudo mv ./kubectl /usr/local/bin/kubectl
+4.kubectl version
+
+#minikube installation
+
+minikube set up in ubuntu machine using kvm2
+
+Here is how you can set up Minikube in an Ubuntu machine using kvm2 as the driver:
+
+1. Install kvm2 driver
+
+curl -LO https://dl.k8s.io/release/stable.txt
+curl -LO https://dl.k8s.io/$(cat stable.txt)/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+sudo apt-get install libvirt-clients libvirt-daemon-system qemu-kvm
+sudo adduser $USER libvirt
+newgrp libvirt
+
+
+2. Install Minikube:
+
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube
+sudo install minikube /usr/local/bin/
+
+3. Start Minikube with kvm2 driver:
+minikube start --driver=kvm2
+
+4. Restart the vm
+
+sudo shutdown now -r
+
+5. Verify Minikube is running:
+minikube status
+kubectl get nodes
