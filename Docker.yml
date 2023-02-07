@@ -1,0 +1,227 @@
+-------------------------------------DOCKER-------------------------------------
+#What is docker?
+Docker is a software which will allow us to build, test and deploy applications quickly.
+consider a senario where you need to run two different versions of node like Node 9 and node 14 in the same machine in this senario we can have everything in the docker file and run all the things in the same machine but in different isolated environments called containers. so basically it is packing the applications into containers which can run seperately without any intervention. We can remove/add all it dependecoes in single go. Helps us to Build, test and ship applications easily
+
+
+
+#Container?
+An isolated environment for running an application. A way to package application with all the necessary dependecies and configurations and that package is portable and easily shared and moved around.Layers of images.
+Container is a running environment for images
+
+
+
+
+#Hypervisors 
+are softwares that helps us to create vms from the host physical machines ex: virtual box, VMware, hyper-v(only for windows)
+ 
+
+#vms vs containers
+  
+#Installation use repository method
+https://docs.docker.com/engine/install/ubuntu/
+
+
+#always keep the docker file like this way
+Dockerfile
+
+#to build an image using the docker file 
+docker build -t nameimage locationofthedockerfile #t for tag
+sudo docker build -t firstimage .
+
+
+
+
+
+#to check all the images
+sudo docker images
+sudo docker image ls
+
+
+#to push images to the docker hub
+
+First login to docker hub
+docker login
+
+enter username 
+password
+
+and then tag it using 
+
+docker tag imagename username/newrepositoryname
+
+check it in docker images it should be there with latest tag name
+
+docker push saikumar86/newjan # then push it to the docker hub
+
+docker push taggedimagename
+
+docker pull saikumar86/newjan #to pull images
+
+docker run saikumar86/newjan #to run container 
+
+
+
+#to run a container 
+docker run containerid
+docker run imagename:verion
+docker run postgres:9.6 # it pulls the images if its not exsist locally and run it
+
+docker ps #for running containers
+
+docker run -d imagename #to run the container in the detach mode
+
+docker stop containerid
+docker start containerid
+
+docker ps -a #all the containers running and not running
+
+ 
+
+docker run -p hostport:containerport imagename -d # ports
+
+docker run -p 6000:6379 redis -d #means the redis container will run on the port 6000 of the host which is internally connected to the 6379 of the redis container port. so now we can access it by using host port itself
+
+#host number should be unique but the container port can be duplicate since it will be on different container
+
+docker logs containerid #to check the logs of the container
+or
+docker logs containername
+
+docker run -d hostport:containerport --name customcontainername iamgename:tag #naming a container
+docker run -d 6001:6379 --name redis-older redis:4.0
+
+docker exec -it conatinerid  /bin/bash #interactive terminal
+docker exec -it conatinername  /bin/bash 
+docker exec -it conatinerid  /bin/sh
+
+#difference between run and start command
+run is to create a new container start is for restaring the created container
+run is used for both running the conatiner and pulling the images
+start is only used for containers 
+we cant use attributes like -p -d --name with start command but with run command
+
+
+#Docker Network
+
+Take a senario where you have 3 images for an application that you're building node for backend react for frontend and mongo db(server) (which uses mongo-express for client communication ). So all these 3 images should built 3 different containers also they all should connect to each other so when we run one single container like on localhost:3000 it should up the main application which is internally connected to the 3 containers.
+
+There are some networks that docker creates internally while we create containers
+docker network ls #give current auto generated neetworks
+
+docker network create networkname #to create a new network
+docker network create mongo-network
+
+sudo docker run -p 27017:27017 -d -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password --name mongodb --net mongo-network mongo #-e environmental variable
+sudo docker run -p hostport:containerport -d -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password --name conatinername --net networkname imagename
+
+sudo docker run -p 8081:8081 -d -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin -e ME_CONFIG_MONGODB_ADMINPASSWORD=password ME_CONFIG_MONGODB_SERVER=mongodb --name mongoexpress --net mongo-network mongo-express
+
+sudo docker run -p 8081:8081 -d -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin -e ME_CONFIG_MONGODB_ADMINPASSWORD=password ME_CONFIG_MONGODB_SERVER=containername --name mongoexpress --net mongo-network mongo-express
+
+#Docker compose
+docker compose -f docker-compose.yaml up
+
+Docker compose files is a collection of docker commands for running multiple containers in one single yaml file. So that it will reduce the efforts of creating/running multiple containers
+  
+  docker compose will take care of creating common network
+
+#Dockerfile
+FROM node:13-alpine
+
+ENV MONGO_DB_USERNAME=admin \
+    MONGO_DB_PWD=password
+
+RUN mkdir -p /home/app
+
+COPY ./app /home/app #executes on the host
+
+# set default dir so that next commands executes in /home/app dir
+WORKDIR /home/app
+
+# will execute npm install in /home/app because of WORKDIR
+RUN npm install
+
+# no need for /home/app/server.js because of WORKDIR
+CMD ["node", "server.js"]
+
+
+
+All the commands in the docker file will be exected on the container but the copy will be exected on the host machine
+
+#to search specific container
+docker ps -a | grep conatinername
+
+#ECR elastic container registery 
+it's an Amazon conatiner service for keeping the docker images privately like docker hub 
+
+
+
+#Volumes
+
+Volumes are created for data persistence in the containers. Each container will be having it's own virtual file system like vms, but when the container gets restarts all the data that is stored inside the container will be removed and it starts from afresh state.
+
+So in order to solve this issue volumes are in place. Plugin the host physical path to the container file system.
+So the Host file system will be mounted to virtual file system in the container. So when the data is written to the container that will be replicated to the host file system. 
+
+There are 3 different types of volums are there 
+
+1. Host volumes: We will  be deciding where on the host machine we need to store the container data
+docker run -v hostfilepath:containerfilepath
+docker run -v /home/mount/data:/var/lib/mysql/data #v for volumes
+
+2.Anonymous volumes: We will not be specifying that host machine path on which the container data should get stored. we will just provide the container data location and the host file system location will be taken care from the docker itself automatically. And all those volumes data will be stored in the /var/lib/docker/volumes/ location on the host where we are running the docker, for each container a folder gets generated that gets mounted.
+
+docker run -v containerfilepath
+docker run -v /var/lib/mysql/data
+
+3.Named volumes: It's mostly used volumes and preferred in the production environtment. Unlike anonymous volumes here we will be getting an option to add the name of the container to the host folder so that it will be easily to identify
+
+we can even store multiple containers data in one volume
+
+
+docker run -v name:containerfilepath
+docker run -v mysql_data:/var/lib/mysql/data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

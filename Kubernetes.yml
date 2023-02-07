@@ -1,0 +1,137 @@
+-------------------------------------KUBERNETES-------------------------------------
+#Kubernetes?
+Container orchestration platform. Also knowns as k8s is an open-source system for automating deployments, scaling and management of containerised applications. Developed by Google. Helps us to manage the containerised applications.
+
+#why kubernetes?
+The trend from monolith to microservice and the increased usage of containers. It will get diffult to manage many containers so to solve this problem kubernetes came into the existance as an orchestration tool
+
+#features of orchestration tools like kubernetes
+1. High availability (no down time)
+2. Scalability (high performanace)
+3. Disater recovery (back up and restore)
+
+#Main kubernetes components
+
+#Worker node Or node
+Which basically means a simple physical or virtual machine. Worker nodes does the actual work in kubernetes. There are 3 main processors that need to be installed on the worker node
+
+1. container runtime (it could be docker or any other container technology)
+In order to run the application container we have install the container run time on every worker node.
+
+2. kubelet:
+Kubelet is used to schedule the pods(conatiners underneath). Kubelets interact with both node and pod. Responsible for assigning the resources like memory, RAM etc.,
+
+
+3.kubeproxy: 
+Is used to forward the request from the pods to the service. Assume that you have created a replica set for app pod and database pod on two different worker nodes. And if you accessing the app pod which in worker node1 the kubeproxy will forward that request to the db pod which is running on the same worker node.
+
+So now how do we interact with this cluster and how to schedule/restart/monitor the pods? All of these are managed by the Master node
+
+#Maste node
+There are 4 main processes will be running on every master node.
+
+1.API server
+Is a cluster gateway accepts the requests from the clinet. Acts as a gate keeper for authencation.So if you want to start or schedule any pods on the worker node you first need to talk to the API server in the master node then it will validate the request and forward it to the other processes running on the master node.only one entrypoint to the cluster is through the master node API server.
+
+2.Scheduler 
+Is responsible for deciding on which worker node the pods needs to be scheduled. It will check all the worker nodes to see which one is free to schedule based on the resources like cpu, ram, memory etc. and decides on which node it should schedule. Once that is decided it makes the request to the kubelet on the particular worker node and it will take care of scheduling.
+
+
+3.Controller manager 
+It will detect the cluster  state changes (like if pods dies, or some issue in the pods etc). Then it will the request to the scheduler to restart or stop the pods running on that worker node
+
+4.etcd
+Stores the cluster state information. Is the cluster brain which stored the key value pair data. All the information in the worker or master node will be stored in the etcd like when pod got reschedule or when the pod got started or died etc. All the processes that are running on the master node will be based on the etcd because how does the scheduler knows which worker node has the available resources in order to schedule any pod. But etcd does store any application data.
+
+Master node can be multiple where the API server and other processes are load balanced but the etcd is distributed storage.master node requires less resource where as worker nodes requires more.
+
+Common kubernetes cluster contains
+2 master nodes and 3 worker nodes
+
+
+
+#Pod
+Smallest unit in the kubernetes. An abstraction layer of container. Usually one pod per application but we can run multiple. Each pod gets its ow IP address not the container. When the container get restarted the new pod will get recreate with the new ip which in convient so to solve this we can another component in the kubernetes called Service
+
+#Service
+pods communicate each other using the service. A service is basically static or permanent ip address which can be attached to the each pod. So the life cycle of pod and service are not connected so even if the pod dies or recreated the ip wont get change. So an application should get connected to a browser right for this we need to create an external service(external service is something that will open to the public request) 
+http://nodeip:serviceport
+http://129.23,232.12:8080
+Consider that we have two containers running in the worker node for an application one is for appcode and one is for database, obviously the database container or pod we dont want to expose it to the public request so for that we will create internal service
+main functionalities of the service: static/permanent IP address and load balancer
+
+#Ingress 
+http://nodeip:serviceport we usually dont want to expose our node ip to public so for that we can one new component called Ingress which takes the public request first and then forward it to the service.
+
+
+
+#ConfigMap
+External configuration of your application. Consider that your are using a database connection string and you supposed to update it in usual case you need to rebuild entire application code. Instead of doing that whole stuff in kubernetes we have this configmap which is used to store the configuration data like database connection realted content. Not recommended to keep the passwords like data in configmap.
+
+#Secret
+Just like the config map secret is also used to store the configuration data but it protected with base64 encoded format. It mainly consist of certifactes, passwords etc. In order to access the data inside configmap or secret data by using the environmental variables or property files
+
+#volume
+Just like the volumes in the docker 
+
+#Deployment
+blue print for the pods, abstraction of pods. It is used to replicate the number of pods. Database pods cant be replicated using the deployments due data inconsistance.Using the deployments we can scale up/down the number of pods.
+Deployments are for stateless app
+Staeful set are for stateful app
+
+#stateful set
+for databases or statefull applications. Database are always hosted outside the kubernetes cluster.
+
+
+#Minikube 
+one node kubernetes cluster set up where master and worker nodes works on the same node.
+It will create a virtual box on your laptop. nodes will run in that box
+
+#kubectl
+command line toold for kubernetes cluster. In order to talk to the API server we have 3 ways UI, API and CLI(kubectl) and among these 3 kubectl is the most powerful one because with this we can do anything in the kubernetes cluster. Kubectl is not just for minikube its for the kubernetes cluster interaction.
+
+
+#kubectl commands
+create minikube cluster
+minikube start --vm-driver=hyperkit
+kubectl get nodes
+minikube status
+kubectl version
+
+delete cluster and restart in debug mode
+minikube delete
+minikube start --vm-driver=hyperkit --v=7 --alsologtostderr
+minikube status
+
+kubectl commands
+kubectl get nodes
+kubectl get pod
+kubectl get services
+kubectl create deployment nginx-depl --image=nginx
+kubectl get deployment
+kubectl get replicaset
+kubectl edit deployment nginx-depl
+
+debugging
+kubectl logs {pod-name}
+kubectl exec -it {pod-name} -- bin/bash
+
+create mongo deployment
+kubectl create deployment mongo-depl --image=mongo
+kubectl logs mongo-depl-{pod-name}
+kubectl describe pod mongo-depl-{pod-name}
+
+delete deplyoment
+kubectl delete deployment mongo-depl
+kubectl delete deployment nginx-depl
+
+create or edit config file
+vim nginx-deployment.yaml
+kubectl apply -f nginx-deployment.yaml
+kubectl get pod
+kubectl get deployment
+
+delete with config
+kubectl delete -f nginx-deployment.yaml
+#Metrics
+kubectl top The kubectl top command returns current CPU and memory usage for a cluster’s pods or nodes, or for a particular pod or node if specified.
