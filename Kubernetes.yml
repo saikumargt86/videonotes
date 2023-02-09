@@ -178,3 +178,496 @@ sudo shutdown now -r
 5. Verify Minikube is running:
 minikube status
 kubectl get nodes
+
+
+kubectl get nodes
+kubectl get pod
+kubectl get services
+
+kubectl get deployment
+kubectl get replicaset
+
+kubectl get all
+
+
+kubectl get pod
+nginxdepl-5ddc44dd46-x78wf 
+deploymentname - replicasetid - podid
+
+kubectl create deployment nginx-depl --image=nginx
+kubectl edit deployment nginx-depl
+kubectl edit deployment deploymentname #to edit a deployment, as we have't created any yml file for deployment it will be autogenereate one with the commands that we have used , 
+#so when we wanted to edi that deployment, actually we are modifying deployment yml file
+
+
+#create #update
+kubectl apply -f deployment.yml #if the deployment file exists with the same then it will update if not it will create new deployment
+#to delete 
+
+kubectl delete -f deployment.yml #for file
+kubectl delete deployment nginx-depl #for normal deployment
+
+kubectl create deployment mongo-depl --image=mongo --replicas=3 #to add replicas
+
+kubectl describe pod mongo-depl-85ddc6d66-74dc7
+kubectl describe pod podname #to see all the process of pod creation
+
+kubectl exec -it nginx-depl-5ddc44dd46-9d7p8 -- /bin/bash #to enter into the conatiner
+kubectl exec -it podname -- /bin/bash 
+kubectl exec -it podname -- /bin/sh
+
+
+#Configuration files
+
+Each Configuration file will have 3 main parts (metadata, specifications, status)
+These yml file can be stored in the git repository where the application code resides or in the seperate repository
+
+apiVersion: apps/v1 #field specifies the Kubernetes API version being used
+
+kind: Deployment #type component
+
+metadata: #section provides information about the deployment
+
+  name: nginx-deployment
+
+  labels: #deployment have it's own label which is used by the service
+
+    app: nginx
+
+spec: #deployment specs,section defines the desired state of the deployment, including the n.of replicas, a selector to identify the pods that belong to the deployment (matchLabels: app: nginx), and the template for the pods 
+
+  replicas: 3
+
+  selector:
+
+    matchLabels:
+
+      app: nginx #the deployment selector labels will get mapped with the below template metadata lables to make connection
+
+  template: #The template specifies the labels for the pods (labels: app: nginx), and the containers that will run in the pods (containers), including their name, image, and exposed ports.
+
+    metadata:
+
+      labels:
+
+        app: nginx
+
+    spec:  #pod/container specifications
+
+      containers:
+
+      - name: nginx
+
+        image: nginx:1.14.2
+
+        ports:
+
+        - containerPort: 80
+
+note:
+Template has it’s own "metadata™ and "spec" section which is applies to Pod
+
+Service (sepc selector)will be connected to both deployment metadata labels and pod lables(template metadata labels)
+
+ 
+#layers of abstraction
+Deployment 
+^
+|
+ReplicaSet 
+^
+|
+Pod
+^
+|
+Container
+
+
+#how the connection is happening between deployment and pod
+
+Connection will happen based on the labels and the selectors. Metadata part contains the lables and the spec part contains the selectors
+
+
+#Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80 #should match with the conatinerport 
+      
+
+kubectl get pods -o wide #output large result set
+
+kubectl get deployment nginx-deployment -o yam1
+
+
+to get the output file which is from the etcd database
+kubectl get deployment nginx-deployment -o yam1 >    nginx-deployment-result.yml #to save into the new file   
+
+
+kubectl get all # to see all the components that are running inside the cluster
+
+#secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secret #random name
+type: Opaque #default for arbitrary key-value pairs
+data: #the actual content in the key-value pair
+  username: YWRtaW4= #username,password we can customise as we like ex: mongo-username: , mongo-password etc
+  password: MWYyZDFlMmU2N2Rm
+
+#Storing the data in a Secret component doesn't automatically make it secure.
+
+#There are built-in mechanism (like encryption) for basic security, which are not enabled by default.
+
+$ echo -n 'testuser' | base64 #encrypting with base64 
+
+#Secret must be created before the Deployment!
+
+We can put multiple files in one single yml file like deployment and service and secret in one single yml file. we just need to use --- after
+every new kind.
+
+apiVersion: v1
+kind:deployment
+..........
+..........
+
+--- #denotes new file
+apiVersion: v1
+kind:service
+..........
+..........
+
+
+
+How to make it an External Service?
+
+“Loadbalancer": ..assigns service an external IP address and so accepts external requests
+
+nodeport is the one which we can access it from outside :must be between 30000-32767
+
+
+
+#Name spcaes
+
+Name space are used to organise resource 
+Virtual cluster inside a cluster
+
+In Kubernetes, a namespace is a way to divide cluster resources between multiple users. Each namespace provides a unique scope for names, allowing you to use the same name for different resources in different namespaces without conflict.
+
+For example, consider a large organization with multiple teams. Each team could have its own namespace for their applications, allowing them to deploy, manage, and scale their applications independently. This way, each team can manage its own resources without interfering with the other teams.
+
+Another example could be for multi-tenancy, where different tenants or clients can have their own namespaces for their applications, resources, and data. This helps to isolate their resources and ensure security and privacy.
+
+Types of name spaces
+1.kube-system: Dont create/modify in kube-system, These are for sytem processes like maste and kubectl processes
+2.kube-public: Publicly accessible data. It has a config map which contains cluster information
+$kubectl cluster-info
+3.kube-node-lease: Recent edition to the kubernetes. Each node has associated lease object in namespace. determines the availablity of the nodes.
+4.default: if you create any component like deployment, service, secret etc it will be under default namespace
+kubectl create namespace my-namespace
+
+#Different ways to create namespaces
+kubectl apply -f mongo.yml --namespace=my-namespace
+kubectl apply -f configurationfilename --namespace=namespacefile
+#we can also create a namespace within the configuration file like below
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: mysql-configmap
+    namespace: my-namespace
+data:
+    db_url: mysql-service.database
+
+
+
+Note : volumes cant be added with in the namespace
+to check which components we can add to namespace and which can
+kubectl api-resources --namespaced=true
+kubectl api-resources --namespaced=false
+
+#change active namespace
+If you want to change the active name space from default to anything else, use the below command
+kubens #shows the active namespace, before that please install kubectx
+
+kubens mynamespace
+kubens namespacename # will get changed to the specified namespace
+
+
+#Ingress
+
+Any thing that you set up in the pod should actually get accessed by the browser. Ingress provides a way to route external traffic to the services within a Kubernetes cluster.
+
+For example, let's say you have a cluster with two services, "frontend" and "backend". The frontend service serves a web application to users, while the backend service provides API functionality. Normally, these services would only be accessible within the cluster. With Ingress, you can create a single entry point for external traffic to access both services. You can configure the Ingress to route traffic to the frontend service when a user visits the "/" path, and route traffic to the backend service when a user visits the "/api" path. In this way, Ingress acts as a reverse proxy, exposing the services to the internet while still keeping them isolated within the cluster.
+
+First request goes to the ingress from the browser and then from ingress to the internal service and then to the respective pod.
+
+#What is the difference between enternal service and the ingress?
+
+In Kubernetes, both Ingress and External Service are ways to expose services to external traffic, but they serve different purposes.
+
+An External Service: is a way to expose a Service to external networks. It provides a stable IP address and DNS name that can be used to access the Service from outside the cluster. External Services can be either ClusterIP, NodePort, LoadBalancer, or ExternalName type.
+
+For example, let's say you have a service "web-app" that you want to expose to the internet. You could create a LoadBalancer type External Service for the "web-app" service, which would give you a stable IP address that you can use to access the service from the internet.
+
+Ingress: on the other hand, is a way to route external traffic to multiple services within a cluster based on the URL path. It acts as a reverse proxy, providing a single entry point for external traffic and routing requests to the appropriate service based on the URL path.
+
+
+#what is ingress controller?
+
+An Ingress Controller is a piece of software that manages the Ingress resources in a Kubernetes cluster. It is responsible for fulfilling the Ingress rules defined in the Ingress resources and routing external traffic to the appropriate services.
+
+Ingress Controllers typically run as pods within the cluster and listen for changes to the Ingress resources. When an Ingress resource is created or updated, the Ingress Controller updates its configuration to match the rules defined in the resource. The Ingress Controller then uses this configuration to route incoming traffic to the appropriate service.
+
+There are various types of Ingress Controllers available, each with different features and capabilities. Some popular Ingress Controllers include NGINX, Traefik, and Istio. The choice of Ingress Controller often depends on the specific requirements of the application and the desired features, such as support for SSL termination, URL rewriting, and path-based routing.
+
+
+NGINX ingress controller:
+which is a type ingress controller provided by kubernetes.
+
+To download that in minikube :
+minikube addons enable ingress
+
+to verify the same:
+kubectl get pod -n kube-system
+
+In order to add https to the urls you need to have the secured SSL certificates. So you can create on secret component configuration file
+where you can mention all the certifacte realted information and refer that in the ingress component configuration file. with the attribute called tls. Make sure both the ingress and secrete are in the same namespace.
+
+
+#Helm(bundle of yml files)
+- Helm changes a lot between versions, so Understand the basic common principles and use cases will help
+
+
+Helm is a package manager for kubernetes
+
+you can use helm hub where you can get some helm packages for any deployment anything that you require as yml file, basically it provides the template. and you can you the same 
+you can also search like helm search <keyword>
+
+Assume a senarion where you need to deploy multiple microservices (like deployment files, services,secrete etc). Alomst everything is same in every microservice but the deployment/service/secrete file names and some values inside will differ in such cases you use helm chart to define a common blue print and for dynamic values you can you the place holders to replace the values.
+
+One more use case: Consider you need to deploy a microservice deploy across multiple environments like DEV, STG and PROD. In such case you use helm charts in order to make it easier deployment in CI/CD.
+
+apiVersion: v2
+name: nginx-web-server
+description: A simple Helm chart for deploying an nginx web server
+version: 0.1.0
+
+# Chart dependencies
+dependencies:
+  - name: nginx
+    version: "2.0.0"
+    repository: https://kubernetes-charts.storage.googleapis.com/
+
+# Specify the templates for the chart
+templates:
+  # Template for the deployment
+  - name: deployment.yaml
+    # Define the deployment using the Kubernetes API
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: nginx-web-server
+      labels:
+        app: nginx-web-server
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
+          app: nginx-web-server
+      template:
+        metadata:
+          labels:
+            app: nginx-web-server
+        spec:
+          containers:
+            - name: nginx-web-server
+              image: nginx:1.16.1
+              ports:
+                - containerPort: 80
+                  name: http
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: http
+
+# Template for the service
+  - name: service.yaml
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: nginx-web-server
+      labels:
+        app: nginx-web-server
+    spec:
+      type: ClusterIP
+      selector:
+        app: nginx-web-server
+      ports:
+        - name: http
+          port: 80
+          targetPort: http
+
+
+This chart can be installed using the helm install command, which will create the necessary Kubernetes resources to run the nginx web server.
+
+helm install <chartname>
+
+#Volumes
+- Storage that doesn't depends in the pod life cycle. 
+-So when the old pod dies and new created or restarted it need to pick the old data as well from the previous pod. 
+-When you have multiple nodes you dont where exactl the pod restarted so the data should available to access across all the nodes in a cluster in order to persist the data.
+-storage also need to survive even if the whole cluster crashes.
+
+How to persist data in the kubernetes using volumes?
+
+Persistent volume: 
+It can be created just like other kubernetes components using YAML configuration file. kind: PersistentVolume
+Can also stores the data which are in the form of files(pdf,excel etc)
+It needs the actual physical storage either from local or from cloud.
+
+A PersistentVolume (PV) in Kubernetes is a piece of storage in the cluster that has been provisioned and made available to all nodes. It provides a way for a Pod to access a durable storage resource, even if the Pod is moved to another node.
+
+Here's an example to help illustrate the concept:
+
+Imagine that you have a database application that requires a large amount of storage space. You can't rely on the EmptyDir volume, which is ephemeral and not suitable for this type of data. To solve this problem, you create a PersistentVolume with a capacity of 100GB and make it available in your cluster.
+
+Next, you create a PersistentVolumeClaim (PVC) that requests access to a portion of the PersistentVolume. The PVC acts as a request for storage, asking for a specific amount of storage space. In this case, the PVC requests 50GB of storage from the PV.
+
+Finally, you mount the PVC inside a Pod running your database application. Now the database can write data to the PV, which will persist even if the Pod is rescheduled to another node in the cluster.
+
+---
+apiVersion: vl
+kind: PersistentVolume
+metadata: null
+    name: pv-name
+spec: null
+    capacity: null
+        storage: 5Gi
+    volumeMode: Filesystem
+    accessModes: 
+        -ReadWriteOnce
+    persistentVolumeReclaimPolicy: Recycle
+    storageClassName: slow
+    mountOptions:
+      -hard
+      - nfsvers=4.0
+    nfs:
+    path: /dir/path/on/nfs/server
+    server: nfs-server-ip-address
+    
+Note:Persistent volumes are not name spaced as they're accessible to the whole cluster
+
+
+
+
+
+
+Persistent volume claim:
+
+In order to fetch the data whatever is stored in the pv, we need persistent volume claim pvc. We can create pvc similar to the pv using yaml file where kind: PersistentVolumeClaim.
+
+You need to mention the pvc in the pod configuration also in the volumes: section
+
+Pod requests the volume through the PV claim
+
+Claim tries to find a volume in cluster
+
+Volume has the actual storage backend then the volume is mounted into the pod
+
+-Claims must be in the same namespace that the pod in. 
+
+-configmap and secretes are local volumes, not created via pv and pvc, managed by kubernetes
+
+-pods can use different types of volumes at time simultaneously
+
+
+Storage class: 
+where there hundereds of pod that requires persistent data we many need to create pv in large amount (the space required on the disk). So in order to solve this issue storage class came into existance. like pv and pvc storage class can also be created using yml file. kind:StorageClass
+
+
+a Storage Class is an object that defines a type of storage that can be requested by a Persistent Volume Claim (PVC).
+It acts as a blueprint for creating Persistent Volumes (PVs) dynamically. A Storage Class specifies the access modes (e.g. ReadWriteOnce), the reclaim policy (e.g. Delete), the volume plugin to use, and other parameters related to the underlying storage infrastructure. The PVC refers to a Storage Class to dynamically provision the storage required by the pod. The Storage Class helps to abstract the underlying storage infrastructure and provides a level of flexibility to dynamically provision and manage storage resources.
+
+For example, a user can create a Storage Class for a high-performance network-attached storage, and another for low-performance, low-cost object storage. The PVC can then select the appropriate Storage Class for its needs, and the corresponding Persistent Volume will be dynamically created and bound to the PVC.
+
+#Statefulset
+examples of stateful applications are : databases like (mysql, mongodb, elastic search etc,.)
+What is stateful and stateless applications?
+The applications that tracks the state by saving their data in the database.
+The applications that dont keep record of it's state means every request is completely new.
+
+Lets conisder an application using nodejs and mongodb database. If there is http request from the user to the nodejs which doest depend on it's previous data (can be considered as stateless ) and it needs to interact with database where it has to update data based on the previous data(can be considered as stateful application)
+
+Stateless applications are deployed using deploy 
+Statefull applications are deployed using stateful set component
+
+Main difference is that we cant replicate the stateful applications 
+
+Stateful applications are not perfect for containerized environments
+
+
+#Services
+
+Each pod has its own ip address 
+ -pods are ephemeral means they are destroyed frequently (so their ip get changes frequently when it's restarted). In order to solve this we have service which assigns a stable ip to the pod. Also supports the loadblacing means user will be refering one single ip which then forwared to multiple pods using the service.
+ 
+#service type attributes inside any service type
+clusterIP, nodeport, loadbalancer
+
+Types of services:
+1. ClusterIP service:
+Default service type. When you create a service and didnt specify which type then it will be assigned to clusterip service type.
+
+Service will be having selectors in it and these are connected to the metadata labels. And if a node has multiple pods with the same metadata label then the service will connect based on the targetport in the service section to the containerport in the pod section.
+
+port attribute in the service section is basically service port means for ingress interaction to the service
+
+service end points: are useful to keep track of which pods are the members/endpoints of the service
+
+2. Headless service:
+
+When the user wants to comminicate with the specific pod not with randomly selected pod. It happens mostly in the stateful application where pod replicas are not identical. In such senarios we use headless service.
+
+
+3. NodePort service:
+nodeport value ranges only between 30000-32767. nodePort will be under targetPort. So the pods can be accesible with ip address of the worker node and nodeport IP defined.
+
+Node port service is not secure.
+
+
+4. LoadBalancer service:
+
+Becomes accessible externally through cloud providers loadbalancer. 
+NodePort and ClusterlP Service are created automatically when you create loadbalancer service 
+
+note: Load balancer service is an extension of nodeport service type
+nodeport service is an extension of cluster ip service.
+
+In real senario you wont nodeport service for any external commincation.
+Either you will you ingress with cluster ip service or 
+loadbalancer service with cluster ip service
+
+
+
+#Node Selectors and Node Affinity
+Are two ways to control the placement of pods in a Kubernetes cluster.
+
+A Node Selector is a simple way to specify which nodes a pod should run on. It allows you to add labels to nodes and then define a selector in the pod specification that matches the desired node labels. The scheduler will then try to place the pod on a node with a matching label.
+
+Node Affinity, on the other hand, provides more fine-grained control over the placement of pods by specifying preferred and required node attributes. There are two types of node affinity: nodeAffinity and requiredDuringSchedulingIgnoredDuringExecution.
+
+nodeAffinity allows you to specify preferred node attributes that should be matched, but it is not required. If the scheduler can't find a node that matches the preferred attributes, it will still schedule the pod on another node.
+
+requiredDuringSchedulingIgnoredDuringExecution allows you to specify node attributes that must be matched in order for a pod to be scheduled. If the scheduler can't find a node that matches the required attributes, it will not schedule the pod.
+
+Node selectors and node affinity can be used to enforce organizational or operational constraints, such as ensuring that certain pods run on nodes with specific hardware or run in a specific geographic region.

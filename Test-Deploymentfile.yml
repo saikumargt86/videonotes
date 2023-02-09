@@ -10,7 +10,7 @@ metadata:
 
     app: nginx
 
-spec:
+spec: #deployment specifications
 
   replicas: 3
 
@@ -28,7 +28,7 @@ spec:
 
         app: nginx
 
-    spec:
+    spec:  #pod/container specifications
 
       containers:
 
