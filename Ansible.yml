@@ -1,1 +1,39 @@
 -------------------------------------Ansible-------------------------------------
+
+-Ansible is an angentless machine which means we dont need to install any software  on the target machines in order to work with the ansible.
+-Where as in the other infra structure automation tools you require to configure the agent on the target machine.
+-Information about all this machines will be stored in an inventory file. If you dont create any invenotry file ansible uses defaul located inventory file (/etc/ansible/host)
+
+#to install ansible
+sudo apt-get update
+sudo apt-get upgrade
+
+sudo apt-get install ansible
+
+ansible --version 
+
+# Inventory file for Ansible
+
+# Define the host group for web servers
+[webservers]
+web1 ansible_host=192.168.1.10 ansible_user=ubuntu
+web2 ansible_host=192.168.1.11 ansible_user=ubuntu
+
+# Define the host group for database servers
+[databases]
+db1 ansible_host=192.168.1.12 ansible_user=ubuntu
+db2 ansible_host=192.168.1.13 ansible_user=ubuntu
+
+# Define the host group for load balancers
+[loadbalancers]
+lb1 ansible_host=192.168.1.14 ansible_user=ubuntu
+lb2 ansible_host=192.168.1.15 ansible_user=ubuntu
+
+# Define all hosts
+[all:vars]
+ansible_connection=ssh
+ansible_python_interpreter=/usr/bin/python3
+
+#In the above example, we have defined three host groups: webservers, databases, and loadbalancers. Each host group contains a list of hosts and their IP addresses or hostnames. Additionally, we have defined a group called all, which contains variables that will apply to all hosts in the inventory. In this case, the variables specify the connection method (ansible_connection) and the Python interpreter (ansible_python_interpreter) that Ansible should use when connecting to the hosts.
+
+

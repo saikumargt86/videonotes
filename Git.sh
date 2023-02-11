@@ -150,7 +150,7 @@ You can use forks to experiment with changes, fix bugs, or add new features to a
 git init: Initialize a local Git repository.
 
 git clone <repository-url>: Clone an existing repository from a remote server to your local machine.
-
+-----
 git add <file-name>: Add a file to the stage, preparing it for a commit.
 
 git commit -m "message": Commit the changes in the stage to the local repository, with an accompanying message.

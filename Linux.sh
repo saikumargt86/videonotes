@@ -72,20 +72,50 @@ grep -i "pattern" filename.txt #This will display all lines in the file filename
 
 
 
+to chage the hostname
 
-How to make it an External Service?
+sudo nano /etc/hostname
 
-“Loadbalancer": ..assigns service an external IP address and so accepts external requests
-
-nodeport is the one which we can access it from outside :must be between 30000-32767
-
+sudo nano /etc/hosts
 
 
+sudo apt-get update 
+command updates the package index on your system. This command is used to download the package information from the Internet so that you have an up-to-date list of all the packages that can be installed on your system.
+
+sudo apt-get upgrade 
+upgrades the packages on your system that have newer versions available. This command will download and install the new packages and their dependencies.
+
+It is recommended to run sudo apt-get update before running sudo apt-get upgrade to ensure that you have the latest information about the available packages and their dependencies.
+
+
+#Enabling SSH on the VM
+If you need SSH enabled on the system, follow the below steps:
+
+Ensure the /etc/apt/sources.list file has been updated as per above
+
+Run the command: apt-get update 
+
+Run the command: apt-get install openssh-server
+
+Run the command: service sshd start
 
 
 
+how to connect to the ec2 instances from one to another using ssh in mobaxterm
+
+ssh -i targetvmsprivetekeyfilename username@targetmachineIP
+
+ssh -i minikube-sai.pem ubuntu@43.204.116.185
+#make sure you store the target machine key in the source machine like above minikube-sai.pem file
 
 
 
+# Inventory file for connecting to Amazon EC2 instances running Ubuntu
 
+[ubuntu_instances]
+# hostname or IP address of the EC2 instance
+instance1 ansible_host=xx.xx.xx.xx ansible_user=ubuntu
+instance2 ansible_host=xx.xx.xx.xx ansible_user=ubuntu
 
+[ubuntu_instances:vars]
+ansible_ssh_private_key_file=path/to/your/private_key.pem
